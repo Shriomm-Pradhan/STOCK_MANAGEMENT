@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Management with Offline Storage</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+  }
+  header {
+    background-color: #343a40;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #e9ecef;
+  }
+  .btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin-right: 5px;
+    border-radius: 5px;
+  }
+  .btn:hover {
+    background-color: #0056b3;
+  }
+  #searchInput {
+    margin-bottom: 10px;
+    padding: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  #shopName {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #343a40;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="shopName">Shriomm Traders</h1>
+</header>
+
+<div class="container">
+  <input type="text" id="searchInput" placeholder="Search by name" onkeyup="searchStock()">
+  <table id="stockTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Available Quantity</th>
+        <th>Price</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Stock data will be inserted here dynamically -->
+    </tbody>
+  </table>
+  <button id="addBtn" class="btn">Add Stock</button>
+</div>
+
+<script>
+  let stocks = [];
+
+  // Load stocks from local storage when the page loads
+  window.addEventListener('load', function() {
+    const savedStocks = localStorage.getItem('stocks');
+    if (savedStocks) {
+      stocks = JSON.parse(savedStocks);
+      sortStocksByAvailability();
+      displayStocks();
+    }
+  });
+
+  function sortStocksByAvailability() {
+    stocks.sort((a, b) => a.quantity - b.quantity);
+  }
+
+  function displayStocks() {
+    const stockTable = document.getElementById('stockTable');
+    const tbody = stockTable.getElementsByTagName('tbody')[0];
+    tbody.innerHTML = '';
+    stocks.forEach((stock, index) => {
+      const row = `<tr>
+        <td>${stock.name}</td>
+        <td>${stock.quantity}</td>
+        <td>${stock.price}</td>
+        <td>
+          <button class="btn" onclick="sellItem(${index})">Sell</button>
+          <button class="btn" onclick="updateQuantity(${index})">Update Quantity</button>
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function searchStock() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const filteredStocks = stocks.filter(stock => stock.name.toLowerCase().includes(input));
+    displayFilteredStocks(filteredStocks);
+  }
+
+  function displayFilteredStocks(filteredStocks) {
+    const tbody = document.querySelector('#stockTable tbody');
+    tbody.innerHTML = '';
+    filteredStocks.forEach((stock, index) => {
+      const row = `<tr>
+        <td>${stock.name}</td>
+        <td>${stock.quantity}</td>
+        <td>${stock.price}</td>
+        <td>
+          <button class="btn" onclick="sellItem(${index})">Sell</button>
+          <button class="btn" onclick="updateQuantity(${index})">Update Quantity</button>
+        </td>
+      </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function sellItem(index) {
+    const soldQuantity = parseInt(prompt('Enter quantity sold for ' + stocks[index].name + ':'));
+    if (!isNaN(soldQuantity) && soldQuantity > 0 && soldQuantity <= stocks[index].quantity) {
+      stocks[index].quantity -= soldQuantity;
+      alert('Sold ' + soldQuantity + ' ' + stocks[index].name);
+      displayStocks();
+      saveStocksToLocalStorage();
+    } else {
+      alert('Invalid quantity or not enough stock available.');
+    }
+  }
+
+  function updateQuantity(index) {
+    const newQuantity = parseInt(prompt('Enter new quantity for ' + stocks[index].name + ':'));
+    if (!isNaN(newQuantity) && newQuantity >= 0) {
+      stocks[index].quantity = newQuantity;
+      alert('Quantity updated for ' + stocks[index].name);
+      displayStocks();
+      saveStocksToLocalStorage();
+    } else {
+      alert('Invalid quantity.');
+    }
+  }
+
+  function saveStocksToLocalStorage() {
+    localStorage.setItem('stocks', JSON.stringify(stocks));
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const name = prompt('Enter product name:');
+    const quantity = parseInt(prompt('Enter available quantity:'));
+    const price = parseFloat(prompt('Enter price:'));
+    stocks.push({ name, quantity, price });
+    sortStocksByAvailability();
+    displayStocks();
+    saveStocksToLocalStorage();
+  });
+
+  displayStocks();
+</script>
+
+</body>
+</html>
